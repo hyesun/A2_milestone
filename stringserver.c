@@ -20,17 +20,14 @@
 
 int establish(unsigned short portnum)
 {
-    char myname[MAXHOSTNAME + 1];
+    char server_address[MAXHOSTNAME + 1];
     int s;
     struct sockaddr_in sa;
     struct hostent *hp;
     memset(&sa, 0, sizeof(struct sockaddr_in)); /* clear our address */
 
-    printf("test\n");
-    gethostname(myname, MAXHOSTNAME); /* who are we? */
-    //fflush(stdout);
-    printf("asdf\n");
-    hp = gethostbyname(myname); /* get our address info */
+    gethostname(server_address, MAXHOSTNAME); /* who are we? */
+    hp = gethostbyname(server_address); /* get our address info */
     if (hp == NULL) /* we don't exist !? */
         return (-1);
 
@@ -40,10 +37,20 @@ int establish(unsigned short portnum)
 
     if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) /* create socket */
         return (-1);
-    if (bind(s, (struct sockaddr*)&sa, sizeof(struct sockaddr_in)) < 0) {
+    if (bind(s, (struct sockaddr*)&sa, sizeof(struct sockaddr_in)) < 0)
+    {
+        //error
         close(s);
-        return (-1); /* bind address to socket */
+        return (-1);
     }
+
+    //this is dynamically allocated port number
+    int server_port = (int)sa.sin_port;
+
+    //print out requred env var
+    printf("SERVER_ADDRESS %s\n", server_address);
+    printf("SERVER_PORT %i\n", server_port);
+
     listen(s, 3); /* max # of queued connects */
     return (s);
 }
@@ -75,11 +82,13 @@ int main()
     //disable buffer for more interactive experience
     setbuf(stdout, NULL);
 
-    printf("START\n");
+    //char a[]= " red blue g awek dd ";
+    //titlecaps(a);
+    //printf("%s", a);
 
     int status = 0;
 
-    int socketfd = establish(2000);
+    int socketfd = establish(PORTNUM);
     printf("socketfd = %i", socketfd);
 
     int newsocketfd = get_connection(socketfd);
@@ -94,14 +103,6 @@ int main()
     printf("num of bytes read: %i", status);
     printf("read: %s", buf);
 
-    //send it back
-    //send something
-    char* buf2 = "jaskl";
-    int len, bytes_sent;
-    len = strlen(buf);
-    printf("length = %i", len);
-    bytes_sent = send(newsocketfd, buf2, len, 0);
-    printf("bytes sent = %i", bytes_sent);
 
     printf("END\n");
     return 0;

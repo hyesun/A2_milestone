@@ -10,6 +10,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include <ctype.h>
 
 #include "stringclient.h"
 
@@ -45,6 +46,54 @@ int call_socket(char *hostname, unsigned short portnum)
     return (s);
 }
 
+void getinput(char* inputbuf)
+{
+    char text[20];
+    fputs("enter some text: ", stdout);
+    fflush(stdout);
+    if (fgets(text, sizeof text, stdin) != NULL)
+    {
+        char *newline = strchr(text, '\n'); //search for newline character
+        if (newline != NULL)
+        {
+            *newline = '\0'; //overwrite trailing newline
+        }
+        printf("text = \"%s\"\n", text);
+    }
+    inputbuf = &text;
+}
+
+char* padleft(char *string, int padded_len)
+{
+    char* pad = "0";
+    int len = (int) strlen(string);
+    if (len >= padded_len)
+    {
+        return string;
+    }
+    int i;
+    for (i = 0; i < padded_len - len; i++) {
+        strcat(string, pad);
+    }
+    return string;
+}
+
+char* itoa(int value, int base)
+{
+    int i = 0;
+    int n = value/base;
+    char* result = malloc(n+1);
+
+    for(i=0; i<n+1 ;i++)
+    {
+        *(result+i) = "0123456789abcdef"[value % base];
+    }
+
+    *(result+i) = '\0';
+
+    return result;
+}
+
 int main()
 {
     //disable buffer for more interactive experience
@@ -52,30 +101,41 @@ int main()
 
     printf("START\n");
 
-    char myname[MAXHOSTNAME + 1];
+    //get socket setup
+    char server_address[MAXHOSTNAME + 1];
     int status=0;
+    gethostname(server_address, MAXHOSTNAME);
+    int socketfd=call_socket(server_address, PORTNUM);
 
-    gethostname(myname, MAXHOSTNAME);
-    int socketfd=call_socket(myname, 2000);
-    printf("socketfd = %i", socketfd);
+    //get user input
+    char * user_input = "hello world";
+    int user_input_len = strlen(user_input);
+
+    //massage
+    char* hexchar = itoa(user_input_len, 16);    //convert integer to hex chars
+    char* hexcharpad = padleft(hexchar, 4);  //pad with '0's
+    printf("final result %s\n", hexcharpad);
+
+    //pack it into message
+    int msg_size = 4+2+user_input_len+1; //4 for 4 byte length, 2 for <, space>, 1 for null terminator
+    char * msg = malloc(msg_size);
+    printf("msg size is %i\n", msg_size);
+    strcpy(msg, hexcharpad);
+    *(msg+4)=',';
+    *(msg+5)=' ';
+    strcpy(msg+6, user_input);
+    *(msg+msg_size-1)='\0';
+    printf("msg is: %s\n", msg);
 
     //send something
     char* buf = "lolz";
     int len, bytes_sent;
     len = strlen(buf);
-    printf("length = %i", len);
     bytes_sent = send(socketfd, buf, len, 0);
-    printf("bytes sent = %i", bytes_sent);
-
 
     //receiving stuff
-    //int recv(int sockfd, void *buf, int len, int flags);
     char* buf2 = malloc(sizeof(char[10]));
-
     status = recv(socketfd, buf2, 10, 0);
-
-    printf("num of bytes read: %i", status);
-    printf("read: %s", buf2);
 
     printf("END\n");
     return 0;
