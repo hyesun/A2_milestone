@@ -32,6 +32,7 @@ int call_socket(char *hostname, unsigned short portnum)
     memcpy((char *) &sa.sin_addr, hp->h_addr, hp->h_length); /* set address */
     sa.sin_family = hp->h_addrtype;
     sa.sin_port = htons((u_short) portnum);
+    sa.sin_addr.s_addr = INADDR_ANY; /*use a specific IP of host*/
 
     if ((s = socket(hp->h_addrtype, SOCK_STREAM, 0)) < 0) /* get socket */
         return (-1);
@@ -46,7 +47,9 @@ int call_socket(char *hostname, unsigned short portnum)
 
 int main()
 {
-    //get user input
+    //disable buffer for more interactive experience
+    setbuf(stdout, NULL);
+
     printf("START\n");
 
     char myname[MAXHOSTNAME + 1];
@@ -54,6 +57,25 @@ int main()
 
     gethostname(myname, MAXHOSTNAME);
     int socketfd=call_socket(myname, 2000);
+    printf("socketfd = %i", socketfd);
+
+    //send something
+    char* buf = "lolz";
+    int len, bytes_sent;
+    len = strlen(buf);
+    printf("length = %i", len);
+    bytes_sent = send(socketfd, buf, len, 0);
+    printf("bytes sent = %i", bytes_sent);
+
+
+    //receiving stuff
+    //int recv(int sockfd, void *buf, int len, int flags);
+    char* buf2 = malloc(sizeof(char[10]));
+
+    status = recv(socketfd, buf2, 10, 0);
+
+    printf("num of bytes read: %i", status);
+    printf("read: %s", buf2);
 
     printf("END\n");
     return 0;
