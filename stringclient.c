@@ -11,12 +11,31 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <ctype.h>
+#include <pthread.h>
 
 #include "stringclient.h"
 
 #define MAXHOSTNAME 100
 #define PORTNUM 2000    //for testing purposes
 #define BACKLOG 5
+
+#define NUMTHREADS 2
+#define READ_THREAD 0
+#define SEND_THREAD 1
+#define THREAD_DATA_SIZE 50
+
+//create threads on stack
+pthread_t threads[NUMTHREADS];
+pthread_mutex_t mutexsum;
+
+int thread_data_count;
+typedef struct
+{
+	int send_ready; //send ready true means not ready to read
+	char *mystring;
+}thread_data;
+
+thread_data thread_data_array[THREAD_DATA_SIZE];
 
 int call_socket(char *hostname, unsigned short portnum)
 {
@@ -93,11 +112,88 @@ char* itoa(int value, int base)
 
     return result;
 }
+//thread for reading input
+void * Read_Thread(void* arg)
+{
+	printf("Read Thread created");
+	int num_bytes_read;
+	int nbytes = 50;
+	char *my_string;
+	/* These 2 lines are the heart of the program. */
+	int count;
+	while(1)
+	{
+		puts ("Please enter a line of text.");
+		my_string = (char *) malloc (nbytes + 1);
+		num_bytes_read = getline (&my_string, &nbytes, stdin);
+
+		if (num_bytes_read == -1)
+		  {
+			puts ("ERROR!");
+		  }
+		else
+		  {
+			puts ("You typed:");
+			puts (my_string);
+			//mutex the following
+			///////
+			pthread_mutex_lock (&mutexsum);
+			thread_data_array[thread_data_count].mystring = my_string;
+			//puts("Address of thread_data_array");
+			//printf("%x", (int)thread_data_array);
+			puts("thread_data_array[thread_data_count].mystring:");
+			puts(thread_data_array[thread_data_count].mystring);
+			thread_data_count++;
+			pthread_mutex_unlock (&mutexsum);
+			///////
+		  }
+	}
+}
+
+void * Send_Thread(void* arg)
+{
+	printf("Send Thread created");
+	int socketfd = (int)(arg);
+	while(1)
+	{
+		while(thread_data_count)
+		{
+			//sleep(2); //sleep for 2 seconds
+			printf("inSend_Thread:%d\n", thread_data_count);
+			//puts("Address of thread_data_array");
+			//printf("%x", (int)thread_data_array);
+			puts("thread_data_array[thread_data_count].mystring:");
+			puts(thread_data_array[0].mystring);
+			send(socketfd, thread_data_array[0].mystring, // send first one on queue
+					strlen(thread_data_array[0].mystring), 0);
+
+			//mutex lock
+			pthread_mutex_lock (&mutexsum);
+			thread_data_count--;
+			//rearrange the queue
+			int i;
+			for(i=0; i< thread_data_count;i++)
+			{
+				thread_data_array[i] = thread_data_array[i+1];
+			}
+			pthread_mutex_unlock (&mutexsum);
+			//mutex release
+			char* stringfromserver = malloc(sizeof(char[300]));
+			recv(socketfd, stringfromserver, 300, 0);
+			printf("read: %s", stringfromserver);
+		}
+	}
+
+}
 
 int main()
 {
     //disable buffer for more interactive experience
     setbuf(stdout, NULL);
+
+    //initialize mutex
+    pthread_mutex_init(&mutexsum, NULL);
+    thread_data_count = 0;
 
     printf("START\n");
 
@@ -107,6 +203,19 @@ int main()
     gethostname(server_address, MAXHOSTNAME);
     int socketfd=call_socket(server_address, PORTNUM);
 
+    //thread for reading input
+    if(pthread_create(&threads[READ_THREAD], NULL, Read_Thread, NULL))
+    {
+    	printf("ERROR creating thread %d", READ_THREAD);
+    	exit(-1);
+    }
+    //thread for sending request
+    if(pthread_create(&threads[SEND_THREAD], NULL, Send_Thread, (void*)socketfd))
+    {
+    	printf("ERROR creating thread %d", SEND_THREAD);
+    	exit(-1);
+    }
+    /*
     //get user input
     char * user_input = "hello world";
     int user_input_len = strlen(user_input);
@@ -139,4 +248,7 @@ int main()
 
     printf("END\n");
     return 0;
+    */
+    pthread_exit(NULL);
+    pthread_mutex_destroy(&mutexsum);
 }

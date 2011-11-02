@@ -1,17 +1,16 @@
 all: stringclient stringserver
 
 stringclient: stringclient.o
-	gcc stringclient.o -o stringclient
+	gcc -pthread stringclient.o -o stringclient
 
 stringserver: stringserver.o
-	gcc stringserver.o -o stringserver
+	gcc -pthread stringserver.o -o stringserver
 
 stringclient.o: stringclient.c
-	gcc -c stringclient.c
+	gcc -c -pthread stringclient.c
 
 stringserver.o: stringserver.c 
-	gcc -c stringserver.c
+	gcc -c -pthread stringserver.c
 
 clean: 
 	rm -rf *o stringclient stringserver
-	

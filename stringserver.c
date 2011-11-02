@@ -86,7 +86,8 @@ int main()
     //titlecaps(a);
     //printf("%s", a);
 
-    int status = 0;
+    int status1 = 1;
+    int status2 = 1;
 
     int socketfd = establish(PORTNUM);
     printf("socketfd = %i", socketfd);
@@ -94,6 +95,17 @@ int main()
     int newsocketfd = get_connection(socketfd);
     printf("newsocketfd = %i", newsocketfd);
 
+    while(1 && status1 && status2)
+    {
+        char* buf = malloc(sizeof(char[300]));
+		status1 = recv(newsocketfd, buf, 300, 0);
+	    printf("\nnum of bytes read: %i\n", status1);
+	    printf("read: %s", buf);
+	    titlecaps(buf);
+	    status2 = send(newsocketfd, buf, 300, 0);
+	    free(buf);
+    }
+    /*
     //receiving stuff
     //int recv(int sockfd, void *buf, int len, int flags);
     char* buf = malloc(sizeof(char[10]));
@@ -105,5 +117,6 @@ int main()
 
 
     printf("END\n");
+    */
     return 0;
 }
