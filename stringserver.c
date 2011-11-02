@@ -143,14 +143,18 @@ int main()
     while(1 && status1 && status2)
     {
         char* buf = (char*)malloc(100);
+        printf("recving\n");
 		status1 = recv(newsocketfd, buf, 100, 0);
+
+		char* temp = (char*)(buf+6);
 
 		printf("\nnum of bytes read: %i\n", status1);
 	    //printf("string_length: %u\n", *(int*)buf);
-	    printf("text: %s\n", (char*)(buf+2));
-	    titlecaps(buf);
-	    status2 = send(newsocketfd, buf, 100, 0);
-	    free(buf);
+	    //printf("text: %s\n", temp);
+	    titlecaps(temp);
+	    int size = strlen(temp);
+	    status2 = send(newsocketfd, temp, size, 0);
+	    //free(temp);
     }
 
     /*

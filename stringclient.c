@@ -166,27 +166,28 @@ void * Send_Thread(void* arg)
 			//sleep(2); //sleep for 2 seconds
 
 			//massage
-		    /*
 			char* input = thread_data_array[0].mystring;
 			unsigned int input_len = strlen(input);  //this includes the null terminator
 
-			unsigned int buffersize = 4+2+input_len; //4 for strlen, 2 for [, ]
+		    //char* input = "hello";//5
+			//unsigned int input_len = strlen(input);  //this includes the null terminator
+			unsigned int buffersize = 4+2+input_len+1; //4 for strlen, 2 for [, ]
             char* buffer = (char*)malloc(buffersize);
+            int* ptr = &input_len;
 
-            buffer = &input_len;
-            *(buffer+4)=',';
-            *(buffer+5)=' ';
-            strcpy(buffer+6, input);
+            strncpy(buffer, (char*)ptr, 4);
+            *(buffer + 4) = ',';
+            *(buffer + 5) = ' ';
+            strcpy(buffer + 6, input);
             *(buffer+buffersize-1)='\0';
 
             printf("testing numer %u\n", *(int*)buffer);
             printf("testing stuff in middle %c\n", *(buffer+4));
             printf("testing stuff in middle %c\n", *(buffer+5));
             printf("testing text %s\n", (char*)(buffer+6));
-            */
 
-			//send(socketfd, buffer, buffersize, 0);
-		    send(socketfd, thread_data_array[0].mystring, strlen(thread_data_array[0].mystring+1), 0);
+			send(socketfd, buffer, buffersize, 0);
+		    //send(socketfd, thread_data_array[0].mystring, strlen(thread_data_array[0].mystring), 0);
 
 			//mutex lock
 			pthread_mutex_lock (&mutexsum);
