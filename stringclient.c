@@ -115,7 +115,7 @@ char* itoa(int value, int base)
 //thread for reading input
 void * Read_Thread(void* arg)
 {
-	printf("Read Thread created");
+	printf("Read Thread created\n");
 	int num_bytes_read;
 	int nbytes = 50;
 	char *my_string;
@@ -123,7 +123,6 @@ void * Read_Thread(void* arg)
 	int count;
 	while(1)
 	{
-		puts ("Please enter a line of text.");
 		my_string = (char *) malloc (nbytes + 1);
 		num_bytes_read = getline (&my_string, &nbytes, stdin);
 
@@ -133,37 +132,24 @@ void * Read_Thread(void* arg)
 		  }
 		else
 		  {
-			puts ("You typed:");
-			puts (my_string);
 			//mutex the following
-			///////
 			pthread_mutex_lock (&mutexsum);
 			thread_data_array[thread_data_count].mystring = my_string;
-			//puts("Address of thread_data_array");
-			//printf("%x", (int)thread_data_array);
-			puts("thread_data_array[thread_data_count].mystring:");
-			puts(thread_data_array[thread_data_count].mystring);
 			thread_data_count++;
 			pthread_mutex_unlock (&mutexsum);
-			///////
 		  }
 	}
 }
 
 void * Send_Thread(void* arg)
 {
-	printf("Send Thread created");
+	printf("Send Thread created\n");
 	int socketfd = (int)(arg);
 	while(1)
 	{
 		while(thread_data_count)
 		{
-			//sleep(2); //sleep for 2 seconds
-			printf("inSend_Thread:%d\n", thread_data_count);
-			//puts("Address of thread_data_array");
-			//printf("%x", (int)thread_data_array);
-			puts("thread_data_array[thread_data_count].mystring:");
-			puts(thread_data_array[0].mystring);
+			sleep(2); //sleep for 2 seconds
 			send(socketfd, thread_data_array[0].mystring, // send first one on queue
 					strlen(thread_data_array[0].mystring), 0);
 
