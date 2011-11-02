@@ -49,7 +49,7 @@ int establish(unsigned short portnum)
     printf("SERVER_ADDRESS %s\n", server_address);
     printf("SERVER_PORT %i\n", server_port);
 
-    listen(s, 3); /* max # of queued connects */
+    listen(s, 5); /* max # of queued connects */
     return (s);
 }
 
@@ -126,9 +126,12 @@ int main()
     // keep track of the biggest file descriptor
     fdmax = listener; // so far, it's this one
 
+    int counter=0;
     // main loop
     for(;;)
     {
+        counter++;
+        printf("\n-----------------main loop: %i--------------\n", counter);
         read_fds = master; // copy it
         if (select(fdmax+1, &read_fds, NULL, NULL, NULL) == -1)
         {
@@ -139,15 +142,16 @@ int main()
         // run through the existing connections looking for data to read
         for(i = 0; i <= fdmax; i++)
         {
+            printf("looping thru existing connections. fdmax=%i, i=%i\n", fdmax, i);
+
             if (FD_ISSET(i, &read_fds))
-            { // we got one!!
+            {
+                // we got one!!
+                printf("we got one!\n");
                 if (i == listener)
                 {
-                    // handle new connections
-                    addrlen = sizeof remoteaddr;
-                    newfd = accept(listener,
-                        (struct sockaddr *)&remoteaddr,
-                        &addrlen);
+                    printf("i is listener\n");
+                    newfd = accept(listener,NULL, NULL);
 
                     if (newfd == -1)
                     {
@@ -164,16 +168,16 @@ int main()
                 }
                 else
                 {
+                    printf("i is not listener. do routine\n");
                     //prepare buffer and read stuff into it
                     char* buffer = (char*)malloc(100);
-                    status1 = recv(newfd, buffer, 100, 0);
-
-                    //checking
-                    int strlen = *(int*)buffer;
+                    status1 = recv(i, buffer, 100, 0);
 
                     //string manipulation
                     titlecaps((buffer+6));
-                    status2 = send(newfd, buffer+6, strlen, 0);
+                    status2 = send(i, buffer, status1, 0);
+
+                    printf("sent!\n");
 
                     //cleanup
                     free(buffer);
