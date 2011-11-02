@@ -174,6 +174,9 @@ int main()
                     //prepare buffer and read stuff into it
                     char* buffer = (char*)malloc(100);
                     status1 = recv(i, buffer, 100, 0);
+                    printf("%i", *(int*)buffer);
+                    printf("%s\n", buffer+4);
+
                     if(status1 <= 0 )
                     {
                     	close(i); // bye!
@@ -184,7 +187,7 @@ int main()
                     titlecaps((buffer+6));
                     status2 = send(i, buffer, status1, 0);
 
-                    printf("sent!\n");
+                    //printf("sent!\n");
 
                     //cleanup
                     free(buffer);

@@ -100,8 +100,6 @@ void * Send_Thread(void* arg)
 	{
 		while(thread_data_count)
 		{
-			sleep(2); //sleep for 2 seconds
-
 			//massage the input data
 			char* input = thread_data_array[0].mystring;
 			unsigned int input_len = strlen(input);  //this includes the null terminator
@@ -132,8 +130,9 @@ void * Send_Thread(void* arg)
 			//mutex release
 			char* stringfromserver = malloc(buffersize+1);
 			recv(socketfd, stringfromserver, buffersize, 0);
-			printf("Server: %s\n\n", stringfromserver+6);
+			printf("Server: %s\n", stringfromserver+6);
 			free(stringfromserver);
+	        sleep(2); //sleep for 2 seconds
 		}
 	}
 
