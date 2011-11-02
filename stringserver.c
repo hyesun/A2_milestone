@@ -12,8 +12,6 @@
 #include <arpa/inet.h>
 #include <ctype.h>
 
-#include "stringserver.h"
-
 #define MAXHOSTNAME 100
 #define PORTNUM 2000    //for testing purposes
 #define BACKLOG 5

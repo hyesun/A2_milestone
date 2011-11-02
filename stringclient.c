@@ -13,8 +13,6 @@
 #include <ctype.h>
 #include <pthread.h>
 
-#include "stringclient.h"
-
 #define STRLENMAX 0xFFFF-1 //max input the user can enter
 #define MAXHOSTNAME 100
 #define PORTNUM 2000    //for testing purposes
