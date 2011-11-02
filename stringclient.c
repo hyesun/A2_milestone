@@ -163,9 +163,30 @@ void * Send_Thread(void* arg)
 	{
 		while(thread_data_count)
 		{
-			sleep(2); //sleep for 2 seconds
-			send(socketfd, thread_data_array[0].mystring, // send first one on queue
-					strlen(thread_data_array[0].mystring)+1, 0);
+			//sleep(2); //sleep for 2 seconds
+
+			//massage
+		    /*
+			char* input = thread_data_array[0].mystring;
+			unsigned int input_len = strlen(input);  //this includes the null terminator
+
+			unsigned int buffersize = 4+2+input_len; //4 for strlen, 2 for [, ]
+            char* buffer = (char*)malloc(buffersize);
+
+            buffer = &input_len;
+            *(buffer+4)=',';
+            *(buffer+5)=' ';
+            strcpy(buffer+6, input);
+            *(buffer+buffersize-1)='\0';
+
+            printf("testing numer %u\n", *(int*)buffer);
+            printf("testing stuff in middle %c\n", *(buffer+4));
+            printf("testing stuff in middle %c\n", *(buffer+5));
+            printf("testing text %s\n", (char*)(buffer+6));
+            */
+
+			//send(socketfd, buffer, buffersize, 0);
+		    send(socketfd, thread_data_array[0].mystring, strlen(thread_data_array[0].mystring+1), 0);
 
 			//mutex lock
 			pthread_mutex_lock (&mutexsum);
@@ -190,6 +211,19 @@ int main()
 {
     //disable buffer for more interactive experience
     setbuf(stdout, NULL);
+
+
+    /*experiment*/
+    printf("\n\nEXPERIMENT START\n\n");
+
+    unsigned int num = 2383833;
+    char* charptr = &num;
+    int* intptr = charptr;
+    printf("int is %u\n", *intptr);
+
+
+
+    printf("\n\nEXPERIMENT END\n\n");
 
     //initialize mutex
     pthread_mutex_init(&mutexsum, NULL);

@@ -140,16 +140,19 @@ int main()
     if(newsocketfd == -1)
     	exit(-1);
 
-    while(1 && status1 && (status2 != -1))
+    while(1 && status1 && status2)
     {
-        char* buf = malloc(sizeof(char[300]));
-		status1 = recv(newsocketfd, buf, 300, 0);
-	    printf("\nnum of bytes read: %i\n", status1);
-	    printf("read: %s", buf);
+        char* buf = (char*)malloc(100);
+		status1 = recv(newsocketfd, buf, 100, 0);
+
+		printf("\nnum of bytes read: %i\n", status1);
+	    //printf("string_length: %u\n", *(int*)buf);
+	    printf("text: %s\n", (char*)(buf+2));
 	    titlecaps(buf);
-	    status2 = send(newsocketfd, buf, 300, 0);
+	    status2 = send(newsocketfd, buf, 100, 0);
 	    free(buf);
     }
+
     /*
     //receiving stuff
     //int recv(int sockfd, void *buf, int len, int flags);
