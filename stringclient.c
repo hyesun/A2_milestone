@@ -21,7 +21,7 @@
 #define NUMTHREADS 2
 #define READ_THREAD 0
 #define SEND_THREAD 1
-#define THREAD_DATA_SIZE 50
+#define THREAD_DATA_SIZE 128
 
 //create threads on stack
 pthread_t threads[NUMTHREADS];
@@ -69,14 +69,14 @@ void * Read_Thread(void* arg)
 {
 	//printf("Read Thread created\n");
 	int num_bytes_read;
-	int nbytes = 50;
+	int nbytes = 128;
 	char *my_string;
 	/* These 2 lines are the heart of the program. */
 	int count;
 	while(1)
 	{
 		my_string = (char *) malloc (nbytes + 1);
-		num_bytes_read = getline (&my_string, &nbytes, stdin);\
+		num_bytes_read = getline (&my_string, &nbytes, stdin);
 		if (num_bytes_read == -1)
 		  {
 			puts ("ERROR!");
@@ -85,7 +85,7 @@ void * Read_Thread(void* arg)
 		  {
 			//mutex the following
 			pthread_mutex_lock (&mutexsum);
-			thread_data_array[thread_data_count].mystring = my_string;\
+			thread_data_array[thread_data_count].mystring = my_string;
 			thread_data_count++;
 			pthread_mutex_unlock (&mutexsum);
 		  }
@@ -106,7 +106,7 @@ void * Send_Thread(void* arg)
 			char* input = thread_data_array[0].mystring;
 			unsigned int input_len = strlen(input);  //this includes the null terminator
 			unsigned int buffersize = 4+2+input_len; //4 for strlen, 2 for [, ]
-            char* buffer = (char*)malloc(buffersize);
+            char* buffer = (char*)malloc(buffersize+1);
 
             strncpy(buffer, (char*)(&input_len), 4);    //4 byte
             *(buffer + 4) = ',';
@@ -116,6 +116,8 @@ void * Send_Thread(void* arg)
             //massage complete
 
 			send(socketfd, buffer, buffersize, 0);
+			free(buffer);
+			free(thread_data_array[0].mystring);
 
 			//mutex lock
 			pthread_mutex_lock (&mutexsum);
@@ -128,9 +130,10 @@ void * Send_Thread(void* arg)
 			}
 			pthread_mutex_unlock (&mutexsum);
 			//mutex release
-			char* stringfromserver = malloc(sizeof(char[300]));
-			recv(socketfd, stringfromserver, 300, 0);
+			char* stringfromserver = malloc(buffersize+1);
+			recv(socketfd, stringfromserver, buffersize, 0);
 			printf("Server: %s\n\n", stringfromserver+6);
+			free(stringfromserver);
 		}
 	}
 

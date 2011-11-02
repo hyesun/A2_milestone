@@ -131,7 +131,7 @@ int main()
     for(;;)
     {
         counter++;
-        printf("\n-----------------main loop: %i--------------\n", counter);
+        //printf("\n-----------------main loop: %i--------------\n", counter);
         read_fds = master; // copy it
         if (select(fdmax+1, &read_fds, NULL, NULL, NULL) == -1)
         {
@@ -142,15 +142,15 @@ int main()
         // run through the existing connections looking for data to read
         for(i = 0; i <= fdmax; i++)
         {
-            printf("looping thru existing connections. fdmax=%i, i=%i\n", fdmax, i);
+            //printf("looping thru existing connections. fdmax=%i, i=%i\n", fdmax, i);
 
             if (FD_ISSET(i, &read_fds))
             {
                 // we got one!!
-                printf("we got one!\n");
+                //printf("we got one!\n");
                 if (i == listener)
                 {
-                    printf("i is listener\n");
+                    //printf("i is listener\n");
                     newfd = accept(listener,NULL, NULL);
 
                     if (newfd == -1)
@@ -168,10 +168,15 @@ int main()
                 }
                 else
                 {
-                    printf("i is not listener. do routine\n");
+                    //printf("i is not listener. do routine\n");
                     //prepare buffer and read stuff into it
                     char* buffer = (char*)malloc(100);
                     status1 = recv(i, buffer, 100, 0);
+                    if(status1 <= 0 )
+                    {
+                    	close(i); // bye!
+                    	FD_CLR(i, &master); // remove from master set
+                    }
 
                     //string manipulation
                     titlecaps((buffer+6));
