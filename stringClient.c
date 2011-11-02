@@ -153,7 +153,6 @@ int main()
     thread_data_count = 0;
 
     //get socket setup
-    //gethostname(server_address, MAXHOSTNAME);
     int socketfd=call_socket(server_address, server_port_num);
 
     //thread for reading input
