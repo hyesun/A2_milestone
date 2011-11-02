@@ -180,7 +180,7 @@ void * Send_Thread(void* arg)
 			//mutex release
 			char* stringfromserver = malloc(sizeof(char[300]));
 			recv(socketfd, stringfromserver, 300, 0);
-			printf("read: %s", stringfromserver);
+			printf("Server: %s", stringfromserver);
 		}
 	}
 
