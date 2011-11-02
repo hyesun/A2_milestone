@@ -124,8 +124,7 @@ void * Read_Thread(void* arg)
 	while(1)
 	{
 		my_string = (char *) malloc (nbytes + 1);
-		num_bytes_read = getline (&my_string, &nbytes, stdin);
-
+		num_bytes_read = getline (&my_string, &nbytes, stdin);\
 		if (num_bytes_read == -1)
 		  {
 			puts ("ERROR!");
@@ -134,7 +133,7 @@ void * Read_Thread(void* arg)
 		  {
 			//mutex the following
 			pthread_mutex_lock (&mutexsum);
-			thread_data_array[thread_data_count].mystring = my_string;
+			thread_data_array[thread_data_count].mystring = my_string;\
 			thread_data_count++;
 			pthread_mutex_unlock (&mutexsum);
 		  }
@@ -151,7 +150,7 @@ void * Send_Thread(void* arg)
 		{
 			sleep(2); //sleep for 2 seconds
 			send(socketfd, thread_data_array[0].mystring, // send first one on queue
-					strlen(thread_data_array[0].mystring), 0);
+					strlen(thread_data_array[0].mystring)+1, 0);
 
 			//mutex lock
 			pthread_mutex_lock (&mutexsum);

@@ -91,9 +91,13 @@ int main()
 
     int socketfd = establish(PORTNUM);
     printf("socketfd = %i", socketfd);
+    if(socketfd == -1)
+    	exit(-1);
 
     int newsocketfd = get_connection(socketfd);
-    printf("newsocketfd = %i", newsocketfd);
+    printf("newsocketfd = %i", newsocketfd);;
+    if(newsocketfd == -1)
+    	exit(-1);
 
     while(1 && status1 && status2)
     {
