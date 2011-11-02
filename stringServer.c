@@ -20,37 +20,41 @@ int establish(unsigned short portnum)
 {
     char server_address[MAXHOSTNAME + 1];
     int s;
-    struct sockaddr_in sa;
+    struct addrinfo hints, *res;
     struct hostent *hp;
-    memset(&sa, 0, sizeof(struct sockaddr_in)); /* clear our address */
 
-    gethostname(server_address, MAXHOSTNAME); /* who are we? */
-    hp = gethostbyname(server_address); /* get our address info */
-    if (hp == NULL) /* we don't exist !? */
-        return (-1);
+    // modern way of doing things with getaddrinfo()
 
-    sa.sin_family = hp->h_addrtype; /* this is our host address */
-    sa.sin_port = htons(portnum); /* this is our port number */
-    sa.sin_addr.s_addr = INADDR_ANY; /*use a specific IP of host*/
+    int sockfd;
 
-    if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) /* create socket */
-        return (-1);
-    if (bind(s, (struct sockaddr*)&sa, sizeof(struct sockaddr_in)) < 0)
-    {
-        //error
-        close(s);
-        return (-1);
-    }
+    // first, load up address structs with getaddrinfo():
+
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_UNSPEC;  // use IPv4 or IPv6, whichever
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;     // fill in my IP for me
+
+    getaddrinfo(NULL, "0", &hints, &res);
+
+    // make a socket:
+    // (you should actually walk the "res" linked list and error-check!)
+
+    sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+
+    // bind it to the port we passed in to getaddrinfo():
+
+    bind(sockfd, res->ai_addr, res->ai_addrlen);
+
 
     listen(s, 5); /* max # of queued connects */
 
     //read the allocated port number
-    int length = sizeof(sa);
-    getsockname(s, (struct sockaddr*)&sa, &length);
+    int length = sizeof(hints);
+    getsockname(s, (struct sockaddr*)&hints, &length);
 
     //print out the required env var
     printf("SERVER_ADDRESS %s\n", server_address);
-    printf("SERVER_PORT %i\n", ntohs(sa.sin_port));
+    printf("SERVER_PORT %i\n", ntohs(((struct sockaddr_in*)(hints.ai_addr))->sin_port));
 
     return (s);
 }

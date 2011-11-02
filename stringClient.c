@@ -36,32 +36,32 @@ typedef struct
 
 thread_data thread_data_array[THREAD_DATA_SIZE];
 
-int call_socket(char *hostname, unsigned short portnum)
+int call_socket(char *hostname, char *portnum)
 {
-    struct sockaddr_in sa;
-    struct hostent *hp;
-    int a, s;
-    if ((hp = gethostbyname(hostname)) == NULL)
-    {
-        errno = ECONNREFUSED; /* do we know the host's address*/
-        return (-1); /* no */
-    }
 
-    memset(&sa, 0, sizeof(sa));
-    memcpy((char *) &sa.sin_addr, hp->h_addr, hp->h_length); /* set address */
-    sa.sin_family = hp->h_addrtype;
-    sa.sin_port = htons((u_short) portnum);
-    sa.sin_addr.s_addr = INADDR_ANY; /*use a specific IP of host*/
+	// connect to www.example.com port 80 (http)
 
-    if ((s = socket(hp->h_addrtype, SOCK_STREAM, 0)) < 0) /* get socket */
-        return (-1);
+	struct addrinfo hints, *res;
+	int sockfd;
 
-    if (connect(s, (struct sockaddr*)&sa, sizeof sa) < 0) { /* connect */
-        close(s);
-        return (-1);
-    }
+	// first, load up address structs with getaddrinfo():
 
-    return (s);
+	memset(&hints, 0, sizeof hints);
+	hints.ai_family = AF_UNSPEC;  // use IPv4 or IPv6, whichever
+	hints.ai_socktype = SOCK_STREAM;
+
+	// we could put "80" instead on "http" on the next line:
+	getaddrinfo(hostname, portnum, &hints, &res);
+
+	// make a socket:
+
+	sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+
+	// connect it to the address and port we passed in to getaddrinfo():
+
+	connect(sockfd, res->ai_addr, res->ai_addrlen);
+
+    return (sockfd);
 }
 
 //thread for reading input
@@ -146,7 +146,7 @@ int main()
     //get env var
     char* server_address = getenv("SERVER_ADDRESS");
     char* server_port = getenv("SERVER_PORT");
-    int server_port_num = atoi(server_port);
+    //int server_port_num = atoi(server_port);
 
     //initialize mutex
     pthread_mutex_init(&mutexsum, NULL);
@@ -154,7 +154,7 @@ int main()
 
     //get socket setup
     //gethostname(server_address, MAXHOSTNAME);
-    int socketfd=call_socket(server_address, server_port_num);
+    int socketfd=call_socket(server_address, server_port);
 
     //thread for reading input
     if(pthread_create(&threads[READ_THREAD], NULL, Read_Thread, NULL))
