@@ -144,15 +144,18 @@ int main()
     //disable buffer for more interactive experience
     setbuf(stdout, NULL);
 
+    //get env var
+    char* server_address = getenv("SERVER_ADDRESS");
+    char* server_port = getenv("SERVER_PORT");
+    int server_port_num = atoi(server_port);
+
     //initialize mutex
     pthread_mutex_init(&mutexsum, NULL);
     thread_data_count = 0;
 
     //get socket setup
-    char server_address[MAXHOSTNAME + 1];
-    int status=0;
     gethostname(server_address, MAXHOSTNAME);
-    int socketfd=call_socket(server_address, PORTNUM);
+    int socketfd=call_socket(server_address, server_port_num);
 
     //thread for reading input
     if(pthread_create(&threads[READ_THREAD], NULL, Read_Thread, NULL))

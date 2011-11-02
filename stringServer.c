@@ -13,7 +13,7 @@
 #include <ctype.h>
 
 #define MAXHOSTNAME 100
-#define PORTNUM 2000    //for testing purposes
+#define PORTNUM 0    //for testing purposes
 #define BACKLOG 5
 
 int establish(unsigned short portnum)
@@ -42,14 +42,16 @@ int establish(unsigned short portnum)
         return (-1);
     }
 
-    //this is dynamically allocated port number
-    int server_port = (int)sa.sin_port;
-
-    //print out requred env var
-    printf("SERVER_ADDRESS %s\n", server_address);
-    printf("SERVER_PORT %i\n", server_port);
-
     listen(s, 5); /* max # of queued connects */
+
+    //read the allocated port number
+    int length = sizeof(sa);
+    getsockname(s, (struct sockaddr*)&sa, &length);
+
+    //print out the required env var
+    printf("SERVER_ADDRESS %s\n", server_address);
+    printf("SERVER_PORT %i\n", ntohs(sa.sin_port));
+
     return (s);
 }
 
