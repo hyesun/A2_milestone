@@ -65,7 +65,7 @@ int call_socket(char *hostname, unsigned short portnum)
 
     return (s);
 }
-
+/*
 char* getinput()
 {
     char text[STRLENMAX];
@@ -83,7 +83,7 @@ char* getinput()
     }
     return (char*)(&text);
 }
-
+*/
 char* padleft(char *string, int padded_len)
 {
     char* pad = "0";
@@ -130,7 +130,7 @@ char* itoa(int value, int base)
 //thread for reading input
 void * Read_Thread(void* arg)
 {
-	printf("Read Thread created\n");
+	//printf("Read Thread created\n");
 	int num_bytes_read;
 	int nbytes = 50;
 	char *my_string;
@@ -157,37 +157,28 @@ void * Read_Thread(void* arg)
 
 void * Send_Thread(void* arg)
 {
-	printf("Send Thread created\n");
+	//printf("Send Thread created\n");
 	int socketfd = (int)(arg);
 	while(1)
 	{
 		while(thread_data_count)
 		{
-			//sleep(2); //sleep for 2 seconds
+			sleep(2); //sleep for 2 seconds
 
-			//massage
+			//massage the input data
 			char* input = thread_data_array[0].mystring;
 			unsigned int input_len = strlen(input);  //this includes the null terminator
-
-		    //char* input = "hello";//5
-			//unsigned int input_len = strlen(input);  //this includes the null terminator
-			unsigned int buffersize = 4+2+input_len+1; //4 for strlen, 2 for [, ]
+			unsigned int buffersize = 4+2+input_len; //4 for strlen, 2 for [, ]
             char* buffer = (char*)malloc(buffersize);
-            int* ptr = &input_len;
 
-            strncpy(buffer, (char*)ptr, 4);
+            strncpy(buffer, (char*)(&input_len), 4);    //4 byte
             *(buffer + 4) = ',';
             *(buffer + 5) = ' ';
-            strcpy(buffer + 6, input);
-            *(buffer+buffersize-1)='\0';
-
-            printf("testing numer %u\n", *(int*)buffer);
-            printf("testing stuff in middle %c\n", *(buffer+4));
-            printf("testing stuff in middle %c\n", *(buffer+5));
-            printf("testing text %s\n", (char*)(buffer+6));
+            strcpy(buffer + 6, input);  //get the input string
+            *(buffer+buffersize-1)='\0';    //just to be safe
+            //massage complete
 
 			send(socketfd, buffer, buffersize, 0);
-		    //send(socketfd, thread_data_array[0].mystring, strlen(thread_data_array[0].mystring), 0);
 
 			//mutex lock
 			pthread_mutex_lock (&mutexsum);
@@ -202,7 +193,7 @@ void * Send_Thread(void* arg)
 			//mutex release
 			char* stringfromserver = malloc(sizeof(char[300]));
 			recv(socketfd, stringfromserver, 300, 0);
-			printf("Server: %s", stringfromserver);
+			printf("Server: %s\n\n", stringfromserver);
 		}
 	}
 
@@ -213,24 +204,9 @@ int main()
     //disable buffer for more interactive experience
     setbuf(stdout, NULL);
 
-
-    /*experiment*/
-    printf("\n\nEXPERIMENT START\n\n");
-
-    unsigned int num = 2383833;
-    char* charptr = &num;
-    int* intptr = charptr;
-    printf("int is %u\n", *intptr);
-
-
-
-    printf("\n\nEXPERIMENT END\n\n");
-
     //initialize mutex
     pthread_mutex_init(&mutexsum, NULL);
     thread_data_count = 0;
-
-    printf("START\n");
 
     //get socket setup
     char server_address[MAXHOSTNAME + 1];

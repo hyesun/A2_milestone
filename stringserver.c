@@ -131,41 +131,41 @@ int main()
     int status2 = 1;
 
     int socketfd = establish(PORTNUM);
-    printf("socketfd = %i", socketfd);
+    //printf("socketfd = %i", socketfd);
     if(socketfd == -1)
     	exit(-1);
 
     int newsocketfd = get_connection(socketfd);
-    printf("newsocketfd = %i", newsocketfd);
+    //printf("newsocketfd = %i", newsocketfd);
     if(newsocketfd == -1)
     	exit(-1);
 
     while(1 && status1 && status2)
     {
-        char* buf = (char*)malloc(100);
-        printf("recving\n");
-		status1 = recv(newsocketfd, buf, 100, 0);
+        //prepare buffer and read stuff into it
+        char* buffer = (char*)malloc(100);
+		status1 = recv(newsocketfd, buffer, 100, 0);
 
-		char* temp = (char*)(buf+6);
+		//checking
+		int strlen = *(int*)buffer;
 
-		printf("\nnum of bytes read: %i\n", status1);
-	    //printf("string_length: %u\n", *(int*)buf);
-	    //printf("text: %s\n", temp);
-	    titlecaps(temp);
-	    int size = strlen(temp);
-	    status2 = send(newsocketfd, temp, size, 0);
-	    //free(temp);
+	    //string manipulation
+	    titlecaps((buffer+6));
+	    status2 = send(newsocketfd, buffer+6, strlen, 0);
+
+	    //cleanup
+	    free(buffer);
     }
 
     /*
     //receiving stuff
-    //int recv(int sockfd, void *buf, int len, int flags);
-    char* buf = malloc(sizeof(char[10]));
+    //int recv(int sockfd, void *buffer, int len, int flags);
+    char* buffer = malloc(sizeof(char[10]));
 
-    status = recv(newsocketfd, buf, 10, 0);
+    status = recv(newsocketfd, buffer, 10, 0);
 
     printf("num of bytes read: %i", status);
-    printf("read: %s", buf);
+    printf("read: %s", buffer);
 
 
     printf("END\n");
