@@ -15,6 +15,7 @@
 
 #include "stringclient.h"
 
+#define STRLENMAX 0xFFFF-1 //max input the user can enter
 #define MAXHOSTNAME 100
 #define PORTNUM 2000    //for testing purposes
 #define BACKLOG 5
@@ -65,9 +66,10 @@ int call_socket(char *hostname, unsigned short portnum)
     return (s);
 }
 
-void getinput(char* inputbuf)
+char* getinput()
 {
-    char text[20];
+    char text[STRLENMAX];
+
     fputs("enter some text: ", stdout);
     fflush(stdout);
     if (fgets(text, sizeof text, stdin) != NULL)
@@ -79,22 +81,35 @@ void getinput(char* inputbuf)
         }
         printf("text = \"%s\"\n", text);
     }
-    inputbuf = &text;
+    return (char*)(&text);
 }
 
 char* padleft(char *string, int padded_len)
 {
     char* pad = "0";
     int len = (int) strlen(string);
+
     if (len >= padded_len)
     {
+        //no need to do anything
         return string;
     }
+
+    //we will return this
+    char* newstring = (char*)malloc(padded_len+1);
+    strcpy(newstring, pad); //need a basis first so use strcpy instead of strcat here
+
     int i;
-    for (i = 0; i < padded_len - len; i++) {
-        strcat(string, pad);
+    for (i = 1; i < padded_len - len; i++)
+    {
+        strcat(newstring, pad); //now we can use strcat
     }
-    return string;
+
+    //finish up with our original string and terminator
+    strcat(newstring,string);
+    *(newstring+padded_len) = '\0';
+
+    return newstring;
 }
 
 char* itoa(int value, int base)
@@ -202,24 +217,24 @@ int main()
     }
     /*
     //get user input
-    char * user_input = "hello world";
-    int user_input_len = strlen(user_input);
+    char* input = getinput();
+    int input_len = strlen(input) + 1; //1 for the null terminator
 
     //massage
-    char* hexchar = itoa(user_input_len, 16);    //convert integer to hex chars
+    char* hexchar = itoa(input_len, 16);    //convert integer to hex chars
     char* hexcharpad = padleft(hexchar, 4);  //pad with '0's
     printf("final result %s\n", hexcharpad);
 
     //pack it into message
-    int msg_size = 4+2+user_input_len+1; //4 for 4 byte length, 2 for <, space>, 1 for null terminator
+    int msg_size = 4+2+input_len; //4 for 4 byte length, 2 for <, space>
     char * msg = malloc(msg_size);
     printf("msg size is %i\n", msg_size);
     strcpy(msg, hexcharpad);
     *(msg+4)=',';
     *(msg+5)=' ';
-    strcpy(msg+6, user_input);
+    strcpy(msg+6, input);
     *(msg+msg_size-1)='\0';
-    printf("msg is: %s\n", msg);
+    printf("msg is: [%s]\n", msg);
 
     //send something
     char* buf = "lolz";
