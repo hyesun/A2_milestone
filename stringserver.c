@@ -77,41 +77,109 @@ void titlecaps(char* text)
 
 int main()
 {
+    //copied
+    fd_set master;    // master file descriptor list
+    fd_set read_fds;  // temp file descriptor list for select()
+    int fdmax;        // maximum file descriptor number
+
+    int listener;     // listening socket descriptor
+    int newfd;        // newly accept()ed socket descriptor
+    struct sockaddr_storage remoteaddr; // client address
+    socklen_t addrlen;
+
+    char buf[256];    // buffer for client data
+    int nbytes;
+
+    char remoteIP[INET6_ADDRSTRLEN];
+
+    int yes=1;        // for setsockopt() SO_REUSEADDR, below
+    int i, j, rv;
+
+    struct addrinfo hints, *ai, *p;
+
+    FD_ZERO(&master);    // clear the master and temp sets
+    FD_ZERO(&read_fds);
+    //end copied
+
+
     //disable buffer for more interactive experience
     setbuf(stdout, NULL);
-
-    //char a[]= " red blue g awek dd ";
-    //titlecaps(a);
-    //printf("%s", a);
 
     int status1 = 1;
     int status2 = 1;
 
-    int socketfd = establish(PORTNUM);
-    //printf("socketfd = %i", socketfd);
-    if(socketfd == -1)
+    listener = establish(PORTNUM);
+    if(listener == -1)
     	exit(-1);
 
+    //not needed?
+    /*
     int newsocketfd = get_connection(socketfd);
-    //printf("newsocketfd = %i", newsocketfd);
     if(newsocketfd == -1)
     	exit(-1);
+    */
 
-    while(1 && status1 && status2)
+    //copied
+    // add the listener to the master set
+    FD_SET(listener, &master);
+
+    // keep track of the biggest file descriptor
+    fdmax = listener; // so far, it's this one
+
+    // main loop
+    for(;;)
     {
-        //prepare buffer and read stuff into it
-        char* buffer = (char*)malloc(100);
-		status1 = recv(newsocketfd, buffer, 100, 0);
+        read_fds = master; // copy it
+        if (select(fdmax+1, &read_fds, NULL, NULL, NULL) == -1)
+        {
+            perror("select");
+            exit(4);
+        }
 
-		//checking
-		int strlen = *(int*)buffer;
+        // run through the existing connections looking for data to read
+        for(i = 0; i <= fdmax; i++)
+        {
+            if (FD_ISSET(i, &read_fds))
+            { // we got one!!
+                if (i == listener)
+                {
+                    // handle new connections
+                    addrlen = sizeof remoteaddr;
+                    newfd = accept(listener,
+                        (struct sockaddr *)&remoteaddr,
+                        &addrlen);
 
-	    //string manipulation
-	    titlecaps((buffer+6));
-	    status2 = send(newsocketfd, buffer+6, strlen, 0);
+                    if (newfd == -1)
+                    {
+                        perror("accept");
+                    }
+                    else
+                    {
+                        FD_SET(newfd, &master); // add to master set
+                        if (newfd > fdmax)
+                        {    // keep track of the max
+                            fdmax = newfd;
+                        }
+                    }
+                }
+                else
+                {
+                    //prepare buffer and read stuff into it
+                    char* buffer = (char*)malloc(100);
+                    status1 = recv(newfd, buffer, 100, 0);
 
-	    //cleanup
-	    free(buffer);
-    }
+                    //checking
+                    int strlen = *(int*)buffer;
+
+                    //string manipulation
+                    titlecaps((buffer+6));
+                    status2 = send(newfd, buffer+6, strlen, 0);
+
+                    //cleanup
+                    free(buffer);
+                } // END handle data from client
+            } // END got new incoming connection
+        } // END looping through file descriptors
+    } // END for(;;)--and you thought it would never end!
     return 0;
 }
